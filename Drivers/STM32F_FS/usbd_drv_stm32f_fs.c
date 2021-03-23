@@ -325,6 +325,7 @@
 #define  STM32F_FS_DxEPCTLx_EPTYPE_ISO           DEF_BIT_MASK(1u, 18u)
 #define  STM32F_FS_DxEPCTLx_EPTYPE_BULK          DEF_BIT_MASK(2u, 18u)
 #define  STM32F_FS_DxEPCTLx_EPTYPE_INTR          DEF_BIT_MASK(3u, 18u)
+#define  STM32F_FS_DxEPCTLx_EPTYPE_MASK          DEF_BIT_FIELD(3u, 18u)
 #define  STM32F_FS_DxEPCTLx_BIT_NAKSTS           DEF_BIT_17
 #define  STM32F_FS_DxEPCTLx_BIT_EONUM            DEF_BIT_16
 #define  STM32F_FS_DxEPCTLx_BIT_DPID             DEF_BIT_16
@@ -392,6 +393,8 @@
 *                                            LOCAL MACROS
 *********************************************************************************************************
 */
+
+#define  USBD_GET_EP_TYPE(val)                       (((val) & STM32F_FS_DxEPCTLx_EPTYPE_MASK) >> 18u)
 
 
 /*
@@ -1082,6 +1085,8 @@ static  void  USBD_DrvHandlerStart (USBD_DRV    *p_drv,
     p_reg->GINTMSK = STM32F_FS_GINTMSK_BIT_USBSUSPM |
                      STM32F_FS_GINTMSK_BIT_USBRST   |
                      STM32F_FS_GINTMSK_BIT_ENUMDNEM |
+                     STM32F_FS_GINTMSK_BIT_IISOOXFRM |
+                     STM32F_FS_GINTMSK_BIT_IISOIXFRM |
                      STM32F_FS_GINTMSK_BIT_WUIM;
 
     switch (drv_type) {
@@ -1309,6 +1314,7 @@ static  void  USBD_DrvEP_Open (USBD_DRV    *p_drv,
 
         case USBD_EP_TYPE_INTR:
         case USBD_EP_TYPE_BULK:
+        case USBD_EP_TYPE_ISOC:
              if (USBD_EP_IS_IN(ep_addr)) {
                  reg_val = (max_pkt_size                 |      /* cfg EP max packet size                               */
                            (ep_type    << 18u)           |      /* cfg EP type                                          */
@@ -1333,7 +1339,6 @@ static  void  USBD_DrvEP_Open (USBD_DRV    *p_drv,
              break;
 
 
-        case USBD_EP_TYPE_ISOC:
         default:
             *p_err = USBD_ERR_INVALID_ARG;
              return;
@@ -1424,6 +1429,7 @@ static  CPU_INT32U  USBD_DrvEP_RxStart (USBD_DRV    *p_drv,
 
     CPU_INT08U           ep_log_nbr;
     CPU_INT08U           ep_phy_nbr;
+    CPU_INT08U           ep_type;
     CPU_INT16U           ep_pkt_len;
     CPU_INT16U           pkt_cnt;
     CPU_INT32U           ctl_reg;
@@ -1459,6 +1465,16 @@ static  CPU_INT32U  USBD_DrvEP_RxStart (USBD_DRV    *p_drv,
 
     p_drv_data->EP_AppBufPtr[ep_phy_nbr] = p_buf;
     p_drv_data->EP_AppBufLen[ep_phy_nbr] = ep_pkt_len;
+
+    ep_type = USBD_GET_EP_TYPE(ctl_reg);
+    if (ep_type == USBD_EP_TYPE_ISOC) {                         /* Check if EP is type is Isochronous                    */
+      if ((p_reg->DSTS & (1U << 8)) == 0U) {
+          ctl_reg |= STM32F_FS_DxEPCTLx_BIT_SODDFRM;
+
+        } else {
+          ctl_reg |= STM32F_FS_DxEPCTLx_BIT_SEVNFRM;
+        }
+    }
 
                                                                 /* Clear EP NAK and Enable EP for receiving             */
     ctl_reg |= STM32F_FS_DxEPCTLx_BIT_CNAK | STM32F_FS_DxEPCTLx_BIT_EPENA;
@@ -1642,6 +1658,7 @@ static  void  USBD_DrvEP_TxStart (USBD_DRV    *p_drv,
                                   USBD_ERR    *p_err)
 {
     CPU_INT08U           ep_log_nbr;
+    CPU_INT08U           ep_type;
     CPU_INT32U           ctl_reg;
     CPU_INT32U           tsiz_reg;
     USBD_STM32F_FS_REG  *p_reg;
@@ -1654,14 +1671,29 @@ static  void  USBD_DrvEP_TxStart (USBD_DRV    *p_drv,
     tsiz_reg = p_reg->DIEP[ep_log_nbr].TSIZx;                   /* Read EP transfer reg                                 */
 
     DEF_BIT_CLR(tsiz_reg, STM32F_FS_DIEPTSIZx_XFRSIZ_MSK);      /* Clear EP transfer size                               */
+    DEF_BIT_CLR(tsiz_reg, STM32F_FS_DIEPTSIZx_PKTCNT_MSK);      /* Clear EP packet count                                */
     tsiz_reg |=  buf_len;                                       /* Transfer size                                        */
     tsiz_reg |= (1u << 19u);                                    /* Packet count                                         */
+
+    ep_type = USBD_GET_EP_TYPE(ctl_reg);
+    if (ep_type == USBD_EP_TYPE_ISOC) {
+        DEF_BIT_CLR(tsiz_reg, STM32F_FS_DIEPTSIZx_MCNT_3_PKT);
+        tsiz_reg |= (1 << 29u);                                 /* Multi count set to 1 packet.                         */
+    }
 
                                                                 /* Clear EP NAK mode & Enable EP transmitting.          */
     ctl_reg |= STM32F_FS_DxEPCTLx_BIT_CNAK | STM32F_FS_DxEPCTLx_BIT_EPENA;
 
     p_reg->DIEP[ep_log_nbr].TSIZx = tsiz_reg;
     p_reg->DIEP[ep_log_nbr].CTLx  = ctl_reg;
+
+    if (ep_type == USBD_EP_TYPE_ISOC) {                         /* Chek if EP is type is Isochronous                    */
+        if ((p_reg->DSTS & (1U << 8)) == 0U) {
+          p_reg->DIEP[ep_log_nbr].CTLx |= STM32F_FS_DxEPCTLx_BIT_SODDFRM;
+        } else {
+          p_reg->DIEP[ep_log_nbr].CTLx |= STM32F_FS_DxEPCTLx_BIT_SEVNFRM;
+        }
+    }
 
     STM32_TxFIFO_Wr(p_drv, ep_log_nbr, p_buf, buf_len);         /* Write to Tx FIFO of associated EP                    */
 
@@ -1899,6 +1931,14 @@ static  void  USBD_DrvISR_Handler (USBD_DRV  *p_drv)
                                                                 /* -------------- OUT ENDPOINT INTERRUPT -------------- */
     if (DEF_BIT_IS_SET(int_stat, STM32F_FS_GINTSTS_BIT_OEPINT) == DEF_YES) {
         STM32_EP_OutProcess(p_drv);
+    }
+                                                                /* -------- INCOMPLETE ISOCHRONOUS OUT TRANSFER ------- */
+    if (DEF_BIT_IS_SET(int_stat, STM32F_FS_GINTSTS_BIT_INCOMPISOOUT) == DEF_YES) {
+        p_reg->GINTSTS &= STM32F_FS_GINTSTS_BIT_INCOMPISOOUT;
+    }
+                                                                /* -------- INCOMPLETE ISOCHRONOUS IN TRANSFER -------- */
+    if (DEF_BIT_IS_SET(int_stat, STM32F_FS_GINTSTS_BIT_IISOIXFR) == DEF_YES) {
+        p_reg->GINTSTS &= STM32F_FS_GINTSTS_BIT_IISOIXFR;
     }
 
                                                                 /* ---------------- USB RESET DETECTION --------------- */

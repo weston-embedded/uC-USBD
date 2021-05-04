@@ -1445,6 +1445,7 @@ static  CPU_BOOLEAN  USBD_Audio_DrvSimulation_CircularBufStreamStore (USBD_AUDIO
     CPU_CRITICAL_ENTER();
     nxt_ix = (p_circular_buf->IxIn + 1u) % USBD_AUDIO_DRV_SIMULATION_CIRCULAR_AUDIO_BUF_SIZE;;
     if (nxt_ix == p_circular_buf->IxOut) {                      /* check if buffer full.                                */
+        CPU_CRITICAL_EXIT();
         return (DEF_FAIL);
     }
 
@@ -1484,6 +1485,7 @@ static  CPU_INT08U  *USBD_Audio_DrvSimulation_CircularBufStreamGet (USBD_AUDIO_D
 
     CPU_CRITICAL_ENTER();
     if (p_circular_buf->IxOut == p_circular_buf->IxIn) {        /* check if buffer empty.                               */
+        CPU_CRITICAL_EXIT();
         return (DEF_NULL);
     }
 

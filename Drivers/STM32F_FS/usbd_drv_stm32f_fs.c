@@ -2188,8 +2188,6 @@ static  void  STM32_RxFIFO_Rd (USBD_DRV  *p_drv)
                  if (p_drv_data->EP_AppBufBlk[ep_phy_nbr] == 0) {
                      p_drv_data->EP_AppBufPtr[ep_phy_nbr] = (CPU_INT08U *)0;
                  }
-
-                 p_drv_data->EP_AppBufPtr[ep_phy_nbr] = (CPU_INT08U *)0;
              } else {                                           /* See Note (1).                                        */
                  word_cnt = (byte_cnt + 3u) / 4u;
                  for (i = 0u; i < word_cnt; i++) {
@@ -2324,8 +2322,6 @@ static  void  STM32_EP_OutProcess (USBD_DRV  *p_drv)
                                                                 /* Re-enable EP for next setup pkt.                     */
             DEF_BIT_SET(p_reg->DOEP[0u].CTLx, STM32F_FS_DxEPCTLx_BIT_EPENA);
         }
-
-        DEF_BIT_SET(p_reg->DOEP[ep_log_nbr].CTLx, STM32F_FS_DxEPCTLx_BIT_SNAK);
 
         if (ep_rx_cmpl) {                                       /* Only set EP in NAK mode if no more data is expected  */
             DEF_BIT_SET(p_reg->DOEP[ep_log_nbr].CTLx, STM32F_FS_DxEPCTLx_BIT_SNAK);

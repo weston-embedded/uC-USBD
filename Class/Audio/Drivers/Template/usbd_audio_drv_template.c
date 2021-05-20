@@ -18,7 +18,7 @@
 *                                   USB AUDIO CODEC DRIVER TEMPLATE
 *
 * Filename : usbd_audio_drv_template.c
-* Version  : V4.06.00
+* Version  : V4.06.01
 *********************************************************************************************************
 */
 

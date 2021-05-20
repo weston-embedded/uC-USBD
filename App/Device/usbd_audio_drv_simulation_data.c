@@ -18,7 +18,7 @@
 *                                  USB AUDIO SIMULATION DRIVER DATA
 *
 * Filename : usbd_audio_drv_simulation_data.c
-* Version  : V4.06.00
+* Version  : V4.06.01
 *********************************************************************************************************
 */
 

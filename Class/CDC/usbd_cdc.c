@@ -3,7 +3,7 @@
 *                                            uC/USB-Device
 *                                    The Embedded USB Device Stack
 *
-*                    Copyright 2004-2020 Silicon Laboratories Inc. www.silabs.com
+*                    Copyright 2004-2021 Silicon Laboratories Inc. www.silabs.com
 *
 *                                 SPDX-License-Identifier: APACHE-2.0
 *
@@ -20,7 +20,7 @@
 *                                USB COMMUNICATIONS DEVICE CLASS (CDC)
 *
 * Filename : usbd_cdc.c
-* Version  : V4.06.00
+* Version  : V4.06.01
 *********************************************************************************************************
 * Note(s)       : (1) This implementation is compliant with the CDC specification revision 1.2
 *                     errata 1. November 3, 2010.

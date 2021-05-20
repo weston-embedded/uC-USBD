@@ -3,7 +3,7 @@
 *                                            uC/USB-Device
 *                                    The Embedded USB Device Stack
 *
-*                    Copyright 2004-2020 Silicon Laboratories Inc. www.silabs.com
+*                    Copyright 2004-2021 Silicon Laboratories Inc. www.silabs.com
 *
 *                                 SPDX-License-Identifier: APACHE-2.0
 *
@@ -22,7 +22,7 @@
 *                                  USB ON-THE-GO FULL-SPEED (OTG_FS)
 *
 * Filename : usbd_drv_stm32f_fs.c
-* Version  : V4.06.00
+* Version  : V4.06.01
 *********************************************************************************************************
 * Note(s)  : (1) You can find specific information about this driver at:
 *                https://doc.micrium.com/display/USBDDRV/STM32F_FS

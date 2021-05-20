@@ -18,7 +18,7 @@
 *                                   USB AUDIO DEVICE CONFIGURATION FILE
 *
 * Filename : usbd_audio_drv_uda1380_codec.h
-* Version  : V4.06.00
+* Version  : V4.06.01
 *********************************************************************************************************
 */
 

@@ -3,7 +3,7 @@
 *                                            uC/USB-Device
 *                                    The Embedded USB Device Stack
 *
-*                    Copyright 2004-2020 Silicon Laboratories Inc. www.silabs.com
+*                    Copyright 2004-2021 Silicon Laboratories Inc. www.silabs.com
 *
 *                                 SPDX-License-Identifier: APACHE-2.0
 *
@@ -22,7 +22,7 @@
 *                                             SERIAL EMULATION
 *
 * Filename : usbd_acm_serial.c
-* Version  : V4.06.00
+* Version  : V4.06.01
 *********************************************************************************************************
 * Note(s)       : (1) This implementation is compliant with the PSTN subclass specification revision 1.2
 *                     February 9, 2007.

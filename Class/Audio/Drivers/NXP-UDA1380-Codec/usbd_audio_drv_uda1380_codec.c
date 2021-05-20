@@ -20,7 +20,7 @@
 *                                              TEMPLATE
 *
 * Filename : usbd_audio_drv_uda1380_codec.c
-* Version  : V4.06.00
+* Version  : V4.06.01
 *********************************************************************************************************
 * Note(s)       : (1) The relevant documentation for this driver is:
 *

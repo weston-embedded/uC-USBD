@@ -506,6 +506,7 @@ typedef  struct  usbd_drv_data_ep {                             /* ---------- DE
     CPU_INT16U   EP_PktXferLen[STM32F_FS_NBR_CHANNEL];          /* EPs current xfer len.                                */
     CPU_INT08U  *EP_AppBufPtr[STM32F_FS_NBR_CHANNEL];           /* Ptr to app buffer.                                   */
     CPU_INT16U   EP_AppBufLen[STM32F_FS_NBR_CHANNEL];           /* Len of app buffer.                                   */
+    CPU_INT16U   EP_AppBufBlk[STM32F_FS_NBR_CHANNEL];           /* Number of packets remaining to read.                 */
     CPU_INT32U   EP_SetupBuf[2u];                               /* Buffer that contains setup pkt.                      */
     CPU_INT16U   DrvType;                                       /* STM32F_FS/ STM32F_OTG_FS/ EFM32_OTG_FS/ XMC_OTG_FS   */
 } USBD_DRV_DATA_EP;
@@ -1416,7 +1417,9 @@ static  void  USBD_DrvEP_Close (USBD_DRV    *p_drv,
 *
 * Return(s)   : Number of bytes that can be handled in one transfer.
 *
-* Note(s)     : none.
+* Note(s)     : (1) Isochronous endpoints will allow larger buffers than the packet size in
+*                   order to deliver better performance. In the case of larger buffers, those
+*                   will be filled by multiple FIFO calls without notifying the application until full.
 *********************************************************************************************************
 */
 
@@ -1465,9 +1468,13 @@ static  CPU_INT32U  USBD_DrvEP_RxStart (USBD_DRV    *p_drv,
 
     p_drv_data->EP_AppBufPtr[ep_phy_nbr] = p_buf;
     p_drv_data->EP_AppBufLen[ep_phy_nbr] = ep_pkt_len;
+    p_drv_data->EP_AppBufBlk[ep_phy_nbr] = 0;
 
     ep_type = USBD_GET_EP_TYPE(ctl_reg);
     if (ep_type == USBD_EP_TYPE_ISOC) {                         /* Check if EP is type is Isochronous                    */
+      p_drv_data->EP_AppBufLen[ep_phy_nbr] = buf_len;           /* Isochronous endpoints allow larger buffers, see (1)   */
+      p_drv_data->EP_AppBufBlk[ep_phy_nbr] = (buf_len + (p_drv_data->EP_MaxPktSize[ep_phy_nbr] - 1u))
+                                           / p_drv_data->EP_MaxPktSize[ep_phy_nbr];
       if ((p_reg->DSTS & (1U << 8)) == 0U) {
           ctl_reg |= STM32F_FS_DxEPCTLx_BIT_SODDFRM;
 
@@ -1485,7 +1492,7 @@ static  CPU_INT32U  USBD_DrvEP_RxStart (USBD_DRV    *p_drv,
 
    *p_err = USBD_ERR_NONE;
 
-    return (ep_pkt_len);
+    return (p_drv_data->EP_AppBufLen[ep_phy_nbr]);
 }
 
 
@@ -2072,6 +2079,7 @@ static  void  STM32_RxFIFO_Rd (USBD_DRV  *p_drv)
 {
     CPU_INT08U           ep_log_nbr;
     CPU_INT08U           ep_phy_nbr;
+    CPU_INT08U           ep_type;
     CPU_INT08U           pkt_stat;
     CPU_INT08U           byte_rem;
     CPU_INT08U           word_cnt;
@@ -2082,6 +2090,7 @@ static  void  STM32_RxFIFO_Rd (USBD_DRV  *p_drv)
     CPU_INT32U           data;
     USBD_DRV_DATA_EP    *p_drv_data;
     USBD_STM32F_FS_REG  *p_reg;
+    CPU_INT32U           ctl_reg;
 
 
     p_reg      = (USBD_STM32F_FS_REG *)p_drv->CfgPtr->BaseAddr;
@@ -2150,7 +2159,35 @@ static  void  STM32_RxFIFO_Rd (USBD_DRV  *p_drv)
                      }
                  }
 
-                 p_drv_data->EP_AppBufPtr[ep_phy_nbr] = (CPU_INT08U *)0;
+                 if (p_drv_data->EP_AppBufBlk[ep_phy_nbr]) {    /* Multi-packet transfer.                               */
+                     p_drv_data->EP_AppBufBlk[ep_phy_nbr]--;
+                     p_drv_data->EP_AppBufPtr[ep_phy_nbr] += byte_cnt;
+                                                                /* If more packets are expected, continue listening.    */
+                     if (p_drv_data->EP_AppBufBlk[ep_phy_nbr] != 0) {
+                       ctl_reg  = p_reg->DOEP[ep_log_nbr].CTLx;
+
+                       ep_type = USBD_GET_EP_TYPE(ctl_reg);
+                       if (ep_type == USBD_EP_TYPE_ISOC) {
+                           if ((p_reg->DSTS & (1U << 8)) == 0U) {
+                             ctl_reg |= STM32F_FS_DxEPCTLx_BIT_SODDFRM;
+
+                           } else {
+                             ctl_reg |= STM32F_FS_DxEPCTLx_BIT_SEVNFRM;
+                           }
+                       }
+
+                                                                /* Clear EP NAK and enable EP for receiving             */
+                       ctl_reg |= STM32F_FS_DxEPCTLx_BIT_CNAK | STM32F_FS_DxEPCTLx_BIT_EPENA;
+
+                       p_reg->DOEP[ep_log_nbr].CTLx          = ctl_reg;
+
+                                                                /* Clear output interrupt since more data is expected   */
+                       DEF_BIT_CLR(p_reg->GINTMSK, STM32F_FS_GINTMSK_BIT_OEPINT);
+                     }
+                 }
+                 if (p_drv_data->EP_AppBufBlk[ep_phy_nbr] == 0) {
+                     p_drv_data->EP_AppBufPtr[ep_phy_nbr] = (CPU_INT08U *)0;
+                 }
              } else {                                           /* See Note (1).                                        */
                  word_cnt = (byte_cnt + 3u) / 4u;
                  for (i = 0u; i < word_cnt; i++) {
@@ -2252,8 +2289,10 @@ static  void  STM32_EP_OutProcess (USBD_DRV  *p_drv)
     CPU_INT32U           ep_int_stat;
     CPU_INT32U           dev_ep_int;
     CPU_INT32U           ep_log_nbr;
+    CPU_INT08U           ep_phy_nbr;
     USBD_DRV_DATA_EP    *p_drv_data;
     USBD_STM32F_FS_REG  *p_reg;
+    CPU_BOOLEAN          ep_rx_cmpl;
 
 
     p_reg      = (USBD_STM32F_FS_REG *)p_drv->CfgPtr->BaseAddr;
@@ -2262,11 +2301,15 @@ static  void  STM32_EP_OutProcess (USBD_DRV  *p_drv)
 
     while (dev_ep_int != DEF_BIT_NONE) {
         ep_log_nbr  = (CPU_INT08U)(31u - CPU_CntLeadZeros32(dev_ep_int & 0x0000FFFFu));
+        ep_phy_nbr  =  USBD_EP_ADDR_TO_PHY(USBD_EP_LOG_TO_ADDR_OUT(ep_log_nbr));
         ep_int_stat =  p_reg->DOEP[ep_log_nbr].INTx;            /* Read OUT EP interrupt status                         */
+        ep_rx_cmpl  = p_drv_data->EP_AppBufBlk[ep_phy_nbr] == 0 ? DEF_TRUE : DEF_FALSE;
 
                                                                 /* Check if EP transfer completed occurred              */
         if (DEF_BIT_IS_SET(ep_int_stat, STM32F_FS_DOEPINTx_BIT_XFRC)) {
-            USBD_EP_RxCmpl(p_drv, ep_log_nbr);
+            if (ep_rx_cmpl) {                                   /* Check if EP has more data to receive                 */
+                USBD_EP_RxCmpl(p_drv, ep_log_nbr);
+            }
                                                                 /* Clear EP transfer complete interrupt                 */
             DEF_BIT_SET(p_reg->DOEP[ep_log_nbr].INTx, STM32F_FS_DOEPINTx_BIT_XFRC);
         }
@@ -2280,7 +2323,9 @@ static  void  STM32_EP_OutProcess (USBD_DRV  *p_drv)
             DEF_BIT_SET(p_reg->DOEP[0u].CTLx, STM32F_FS_DxEPCTLx_BIT_EPENA);
         }
 
-        DEF_BIT_SET(p_reg->DOEP[ep_log_nbr].CTLx, STM32F_FS_DxEPCTLx_BIT_SNAK);
+        if (ep_rx_cmpl) {                                       /* Only set EP in NAK mode if no more data is expected  */
+            DEF_BIT_SET(p_reg->DOEP[ep_log_nbr].CTLx, STM32F_FS_DxEPCTLx_BIT_SNAK);
+        }
 
         dev_ep_int = p_reg->DAINT >> 16u;                       /* Read all Device OUT Endpoint interrupt               */
     }

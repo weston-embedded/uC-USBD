@@ -627,6 +627,7 @@ typedef  const  struct  usbd_audio_as_if_cfg {                  /* AudioStreamin
 typedef  const  struct  usbd_audio_stream_cfg {                 /* General audio stream cfg.                            */
     CPU_INT16U               MaxBufNbr;                         /* Max buf nbr.                                         */
     CPU_INT16U               CorrPeriodMs;                      /* Period at which corr must be monitored.              */
+    CPU_INT16U               ExtraPktTx;                        /* For extended transfers                               */
 } USBD_AUDIO_STREAM_CFG;
 
 

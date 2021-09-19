@@ -2314,7 +2314,8 @@ USBD_AUDIO_AS_IF_HANDLE  USBD_Audio_AS_IF_Cfg (const  USBD_AUDIO_STREAM_CFG     
     }
 
                                                                 /* See Note #2.                                         */
-    mem_blk_len_worst           =  MATH_ROUND_INC_UP(max_mem_blk_len, USBD_AUDIO_CFG_BUF_ALIGN_OCTETS);
+    mem_blk_len_worst           =  MATH_ROUND_INC_UP(max_mem_blk_len * (p_stream_cfg->ExtraPktTx + 1),
+                                                     USBD_AUDIO_CFG_BUF_ALIGN_OCTETS);
     p_as_if_settings->BufMemPtr = (CPU_INT08U *)Mem_SegAllocHW("Audio Data Buf Mem",
                                                                 p_seg,
                                                                (mem_blk_len_worst * p_stream_cfg->MaxBufNbr),
@@ -2341,7 +2342,7 @@ USBD_AUDIO_AS_IF_HANDLE  USBD_Audio_AS_IF_Cfg (const  USBD_AUDIO_STREAM_CFG     
     p_as_if_settings->Ix                = as_if_settings_ix;
     p_as_if_settings->TerminalID        = terminal_ID;
     p_as_if_settings->BufTotalNbr       = p_stream_cfg->MaxBufNbr;
-    p_as_if_settings->BufTotalLen       = max_mem_blk_len;
+    p_as_if_settings->BufTotalLen       = max_mem_blk_len * (p_stream_cfg->ExtraPktTx + 1);
     p_as_if_settings->StreamDir         = stream_dir;
     p_as_if_settings->StreamStarted     = DEF_NO;
                                                                 /* See Note #3.                                         */

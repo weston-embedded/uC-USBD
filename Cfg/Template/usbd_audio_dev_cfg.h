@@ -57,11 +57,13 @@
 */
 
 #define  USBD_AUDIO_DEV_CFG_RECORD_CORR_PERIOD             16u  /* Record correction period in ms.                      */
+#define  USBD_AUDIO_DEV_CFG_RECORD_EXTRA_PCK                0u
 
 #define  USBD_AUDIO_DEV_CFG_RECORD_NBR_BUF                 USBD_AUDIO_STREAM_NBR_BUF_18
 
 #if (APP_CFG_USBD_AUDIO_SIMULATION_LOOP_EN == DEF_ENABLED)
 #define  USBD_AUDIO_DEV_CFG_PLAYBACK_CORR_PERIOD           16u  /* Playback correction period in ms.                    */
+#define  USBD_AUDIO_DEV_CFG_PLAYBACK_EXTRA_PCK              0u
 #define  USBD_AUDIO_DEV_CFG_NBR_ENTITY                      6u  /* Nbr of entities (units/terminals) used by audio fnct.*/
 #define  USBD_AUDIO_DEV_CFG_PLAYBACK_NBR_BUF               USBD_AUDIO_STREAM_NBR_BUF_18
 #else

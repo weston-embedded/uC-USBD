@@ -2180,9 +2180,6 @@ static  void  STM32_RxFIFO_Rd (USBD_DRV  *p_drv)
                        ctl_reg |= STM32F_FS_DxEPCTLx_BIT_CNAK | STM32F_FS_DxEPCTLx_BIT_EPENA;
 
                        p_reg->DOEP[ep_log_nbr].CTLx          = ctl_reg;
-
-                                                                /* Clear output interrupt since more data is expected   */
-                       DEF_BIT_CLR(p_reg->GINTMSK, STM32F_FS_GINTMSK_BIT_OEPINT);
                      }
                  }
                  if (p_drv_data->EP_AppBufBlk[ep_phy_nbr] == 0) {

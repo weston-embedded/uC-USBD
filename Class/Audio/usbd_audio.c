@@ -2552,7 +2552,7 @@ void  USBD_Audio_AS_IF_Add (       CPU_INT08U                class_nbr,
                                  USBD_CLASS_CODE_AUDIO,
                                  USBD_AUDIO_SUBCLASS_AUDIO_STREAMING,
                                  0u,
-                                "0-Bandwidth AudioStreaming Interface",
+                                 p_as_cfg_name,
                                  p_err);
     if (*p_err != USBD_ERR_NONE) {
         return;

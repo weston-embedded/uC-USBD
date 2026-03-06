@@ -5641,10 +5641,11 @@ static  CPU_BOOLEAN  USBD_StdReqEP (const  USBD_DEV    *p_dev,
                           ep_phy_nbr = USBD_EP_ADDR_TO_PHY(ep_addr);
                           if_nbr     = p_dev->EP_IF_Tbl[ep_phy_nbr];
                           p_if       = USBD_IF_RefGet(p_dev->CfgCurPtr, if_nbr);
-                          p_alt_if   = p_if->AltCurPtr;
 
                                                                 /* Notify class that EP state has been updated.         */
-                          if (p_if->ClassDrvPtr->EP_StateUpdate != (void *)0) {
+                          if ((p_if                              != (void *)0) &&
+                              (p_if->ClassDrvPtr->EP_StateUpdate != (void *)0)) {
+                              p_alt_if = p_if->AltCurPtr;
                               p_if->ClassDrvPtr->EP_StateUpdate(p_dev->Nbr,
                                                                 p_dev->CfgCurNbr,
                                                                 if_nbr,

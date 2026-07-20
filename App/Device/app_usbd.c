@@ -229,6 +229,16 @@ CPU_BOOLEAN  App_USBD_Init (void)
     }
 #endif
 
+#if (APP_CFG_USBD_CDC_ECM_EN == DEF_ENABLED)
+    ok = App_USBD_CDC_ECM_Init(dev_nbr,                         /* Initialize CDC ECM class.                            */
+                               cfg_hs_nbr,
+                               cfg_fs_nbr);
+    if (ok != DEF_OK) {
+        APP_TRACE_DBG(("    ... could not initialize CDC ECM class w/err =  %d\r\n\r\n", err));
+        return (DEF_FAIL);
+    }
+#endif
+
 #if (APP_CFG_USBD_CDC_EEM_EN == DEF_ENABLED)
     ok = App_USBD_CDC_EEM_Init(dev_nbr,                         /* Initialize CDC EEM subclass.                         */
                                cfg_hs_nbr,

@@ -52,6 +52,7 @@
 
 #define  USBD_ECM_DESC_SIZE                              13u    /* Size of the ECM functional descriptor.               */
 #define  USBD_ECM_REQ_BUF_SIZE                           16u    /* Size of the request buffer.                          */
+#define  USBD_ECM_NOTIFY_INTERVAL                         8u    /* Notification endpoint polling interval.              */
 
 
 /*
@@ -82,15 +83,15 @@
 */
 
 typedef  struct  usbd_ecm_ctrl {                                /* --------- ECM SUBCLASS CONTROL INFORMATION --------- */
-    CPU_INT08U            Nbr;                                  /* CDC dev nbr.                                         */
-    USBD_ECM_MGMT_REQ     MgmtReq;                              /* Mgmt req callback.                                   */
-    void                 *MgmtReqArg;                           /* Mgmt req callback arg.                               */
-    CPU_INT08U            MACAddrStrIdx;                        /* MAC address string index.                            */
-    CPU_INT32U            EthernetStats;                        /* Ethernet statistics.                                 */
-    CPU_INT16U            MaxSegSize;                           /* Maximum segment size.                                */
-    CPU_INT16U            NumMCFilters;                         /* Number of multicast filters.                         */
-    CPU_INT08U            NumPwrFilters;                        /* Number of power filters.                             */
-    CPU_INT08U            ReqBufPtr[USBD_ECM_REQ_BUF_SIZE];     /* Request buffer.                                      */
+    CPU_INT08U          Nbr;                                    /* CDC dev nbr.                                         */
+    USBD_ECM_MGMT_REQ   MgmtReq;                                /* Mgmt req callback.                                   */
+    void               *MgmtReqArg;                             /* Mgmt req callback arg.                               */
+    CPU_INT08U          MACAddrStrIdx;                          /* MAC address string index.                            */
+    CPU_INT32U          EthernetStats;                          /* Ethernet statistics.                                 */
+    CPU_INT16U          MaxSegSize;                             /* Maximum segment size.                                */
+    CPU_INT16U          NumMCFilters;                           /* Number of multicast filters.                         */
+    CPU_INT08U          NumPwrFilters;                          /* Number of power filters.                             */
+    CPU_INT08U          ReqBufPtr[USBD_ECM_REQ_BUF_SIZE];       /* Request buffer.                                      */
 } USBD_ECM_CTRL;
 
 
@@ -107,8 +108,8 @@ typedef  struct  usbd_ecm_ctrl {                                /* --------- ECM
 *********************************************************************************************************
 */
 
-static  USBD_ECM_CTRL         USBD_ECM_CtrlTbl[USBD_ECM_CFG_MAX_NBR_DEV];
-static  CPU_INT08U            USBD_ECM_CtrlNbrNext;
+static  USBD_ECM_CTRL  USBD_ECM_CtrlTbl[USBD_ECM_CFG_MAX_NBR_DEV];
+static  CPU_INT08U     USBD_ECM_CtrlNbrNext;
 
 
 /*
@@ -171,7 +172,7 @@ static  USBD_CDC_SUBCLASS_DRV  USBD_ECM_Drv = {
 
 /*
 *********************************************************************************************************
-*                                        USBD_ECM_Init()
+*                                           USBD_ECM_Init()
 *
 * Description : Initialize CDC ECM subclass.
 *
@@ -199,14 +200,14 @@ void  USBD_ECM_Init (USBD_ERR  *p_err)
 
                                                                 /* Init ECM ctrl.                                       */
     for (ix = 0u; ix < USBD_ECM_CFG_MAX_NBR_DEV; ix++) {
-        p_ctrl                        = &USBD_ECM_CtrlTbl[ix];
-        p_ctrl->Nbr                   =  USBD_CDC_NBR_NONE;
-        p_ctrl->MgmtReq               = (USBD_ECM_MGMT_REQ)0;
-        p_ctrl->MACAddrStrIdx         =  0u;
-        p_ctrl->EthernetStats         =  0u;
-        p_ctrl->MaxSegSize            =  0u;
-        p_ctrl->NumMCFilters          =  0u;
-        p_ctrl->NumPwrFilters         =  0u;
+        p_ctrl                = &USBD_ECM_CtrlTbl[ix];
+        p_ctrl->Nbr           =  USBD_CDC_NBR_NONE;
+        p_ctrl->MgmtReq       = (USBD_ECM_MGMT_REQ)0;
+        p_ctrl->MACAddrStrIdx =  0u;
+        p_ctrl->EthernetStats =  0u;
+        p_ctrl->MaxSegSize    =  0u;
+        p_ctrl->NumMCFilters  =  0u;
+        p_ctrl->NumPwrFilters =  0u;
 
         Mem_Clr(p_ctrl->ReqBufPtr, USBD_ECM_REQ_BUF_SIZE);
     }
@@ -219,7 +220,7 @@ void  USBD_ECM_Init (USBD_ERR  *p_err)
 
 /*
 *********************************************************************************************************
-*                                        USBD_ECM_Add()
+*                                            USBD_ECM_Add()
 *
 * Description : Add a new instance of the CDC ECM subclass.
 *
@@ -284,7 +285,7 @@ CPU_INT08U  USBD_ECM_Add (USBD_ECM_MGMT_REQ   mgmt_req,
                              (void *)p_ctrl,
                                      USBD_CDC_COMM_PROTOCOL_NONE,
                                      DEF_ENABLED,
-                                     8u,
+                                     USBD_ECM_NOTIFY_INTERVAL,
                                      p_err);
 
     if (*p_err != USBD_ERR_NONE) {
@@ -313,9 +314,9 @@ CPU_INT08U  USBD_ECM_Add (USBD_ECM_MGMT_REQ   mgmt_req,
         return (USBD_ECM_NBR_NONE);
     }
 
-    p_ctrl->Nbr               = class_nbr;
-    p_ctrl->MgmtReq           = mgmt_req;
-    p_ctrl->MgmtReqArg        = mgmt_req_arg;
+    p_ctrl->Nbr        = class_nbr;
+    p_ctrl->MgmtReq    = mgmt_req;
+    p_ctrl->MgmtReqArg = mgmt_req_arg;
 
    *p_err = USBD_ERR_NONE;
 
@@ -325,7 +326,7 @@ CPU_INT08U  USBD_ECM_Add (USBD_ECM_MGMT_REQ   mgmt_req,
 
 /*
 *********************************************************************************************************
-*                                       USBD_ECM_CfgAdd()
+*                                          USBD_ECM_CfgAdd()
 *
 * Description : Add CDC ECM subclass instance into USB device configuration.
 *
@@ -420,10 +421,10 @@ CPU_BOOLEAN  USBD_ECM_CfgAdd (      CPU_INT08U   subclass_nbr,
                                                                 /* Store MAC address string index.                      */
     p_ctrl->MACAddrStrIdx = USBD_StrIxGet(dev_nbr, mac_addr);
 
-    p_ctrl->EthernetStats  = ethernet_stats;
-    p_ctrl->MaxSegSize     = max_seg_size;
-    p_ctrl->NumMCFilters   = num_mc_filters;
-    p_ctrl->NumPwrFilters  = num_pwr_filters;
+    p_ctrl->EthernetStats = ethernet_stats;
+    p_ctrl->MaxSegSize    = max_seg_size;
+    p_ctrl->NumMCFilters  = num_mc_filters;
+    p_ctrl->NumPwrFilters = num_pwr_filters;
 
     return (DEF_YES);
 }
@@ -532,7 +533,7 @@ CPU_INT32U  USBD_ECM_DataRx (CPU_INT08U   subclass_nbr,
 *
 *               timeout_ms     Timeout in milliseconds.
 *
-*               p_err           Pointer to variable that will receive return error code from this function :
+*               p_err          Pointer to variable that will receive return error code from this function :
 *
 *                                   USBD_ERR_NONE                   Data successfully received.
 *                                   USBD_ERR_CLASS_INVALID_NBR      Invalid subclass number.
@@ -758,7 +759,7 @@ CPU_INT32U  USBD_ECM_Notify (CPU_INT08U   subclass_nbr,
 
 /*
 *********************************************************************************************************
-*                                          USBD_ECM_NotifyNetConn()
+*                                       USBD_ECM_NotifyNetConn()
 *
 * Description : Send NetworkConnection notification to host.
 *
@@ -806,15 +807,15 @@ void  USBD_ECM_NotifyNetConn (CPU_INT08U    subclass_nbr,
 
 /*
 *********************************************************************************************************
-*                                          USBD_ECM_NotifyConnSpdChng()
+*                                     USBD_ECM_NotifyConnSpdChng()
 *
 * Description : Send NetworkConnection notification to host.
 *
 * Argument(s) : subclass_nbr    CDC ECM subclass instance number.
 *
-*              dl_bit_rate     Downlink bit rate.
+*               dl_bit_rate     Downlink bit rate.
 *
-*              ul_bit_rate     Uplink bit rate.
+*               ul_bit_rate     Uplink bit rate.
 *
 *               p_err           Pointer to variable that will receive return error code from this function :
 *
@@ -860,7 +861,7 @@ void  USBD_ECM_NotifyConnSpdChng (CPU_INT08U   subclass_nbr,
 
 /*
 *********************************************************************************************************
-*                                      USBD_ECM_MgmtReq()
+*                                          USBD_ECM_MgmtReq()
 *
 * Description : CDC ECM class management request.
 *
@@ -884,13 +885,15 @@ static  CPU_BOOLEAN  USBD_ECM_MgmtReq (       CPU_INT08U       dev_nbr,
 {
     USBD_ECM_CTRL  *p_ctrl;
     CPU_INT08U      request_code;
+    CPU_BOOLEAN     valid;
 
 
     p_ctrl       = (USBD_ECM_CTRL *)p_subclass_arg;
     request_code =  p_setup_req->bRequest;
+    valid        =  DEF_FAIL;
 
     if (p_ctrl->MgmtReq == DEF_NULL) {
-        return (DEF_FALSE);
+        return (valid);
     }
 
     switch (request_code) {
@@ -899,17 +902,21 @@ static  CPU_BOOLEAN  USBD_ECM_MgmtReq (       CPU_INT08U       dev_nbr,
         case USBD_CDC_REQ_GET_ETHER_PWR_MGT_FILTER:
         case USBD_CDC_REQ_SET_ETHER_PKT_FILTER:
         case USBD_CDC_REQ_GET_ETHER_STAT:
-            return p_ctrl->MgmtReq(dev_nbr, p_setup_req, p_ctrl->MgmtReqArg);
+             valid = p_ctrl->MgmtReq(dev_nbr, p_setup_req, p_ctrl->MgmtReqArg);
+             break;
+
 
         default:
-            return (DEF_FALSE);
+             break;
     }
+
+    return (valid);
 }
 
 
 /*
 *********************************************************************************************************
-*                                     USBD_ECM_NotifyCmpl()
+*                                        USBD_ECM_NotifyCmpl()
 *
 * Description : ECM subclass notification complete callback.
 *
@@ -933,7 +940,7 @@ static  void  USBD_ECM_NotifyCmpl (CPU_INT08U   dev_nbr,
 
 /*
 *********************************************************************************************************
-*                                      USBD_ECM_FnctDesc()
+*                                         USBD_ECM_FnctDesc()
 *
 * Description : CDC ECM Subclass interface descriptor callback.
 *
@@ -941,7 +948,7 @@ static  void  USBD_ECM_NotifyCmpl (CPU_INT08U   dev_nbr,
 *
 *               p_subclass_arg      Pointer to subclass argument.
 *
-*               if_nbr              Unused
+*               first_dci_if_nbr    Unused
 *
 * Return(s)   : none.
 *
@@ -951,9 +958,9 @@ static  void  USBD_ECM_NotifyCmpl (CPU_INT08U   dev_nbr,
 
 static  void  USBD_ECM_FnctDesc (CPU_INT08U   dev_nbr,
                                  void        *p_subclass_arg,
-                                 CPU_INT08U   if_nbr)
+                                 CPU_INT08U   first_dci_if_nbr)
 {
-    (void)if_nbr;
+    (void)first_dci_if_nbr;
 
     USBD_ECM_CTRL  *p_ctrl = (USBD_ECM_CTRL *)p_subclass_arg;
 
@@ -971,7 +978,7 @@ static  void  USBD_ECM_FnctDesc (CPU_INT08U   dev_nbr,
 
 /*
 *********************************************************************************************************
-*                                  USBD_ECM_FnctDescSizeGet()
+*                                      USBD_ECM_FnctDescSizeGet()
 *
 * Description : Retrieve the size of the CDC ECM subclass interface descriptor.
 *

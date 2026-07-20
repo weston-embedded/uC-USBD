@@ -85,57 +85,57 @@ typedef CPU_BOOLEAN  (*USBD_ECM_MGMT_REQ) (       CPU_INT08U       dev_nbr,
 *********************************************************************************************************
 */
 
-void  USBD_ECM_Init                (      USBD_ERR        *p_err);
+void        USBD_ECM_Init       (      USBD_ERR           *p_err);
 
-CPU_INT08U  USBD_ECM_Add           (      USBD_ECM_MGMT_REQ   mgmt_req,
-                                          void               *mgmt_req_arg,
-                                          CPU_BOOLEAN         end_tx_en,
-                                          USBD_ERR           *p_err);
+CPU_INT08U  USBD_ECM_Add        (      USBD_ECM_MGMT_REQ   mgmt_req,
+                                       void               *mgmt_req_arg,
+                                       CPU_BOOLEAN         end_tx_en,
+                                       USBD_ERR           *p_err);
 
-CPU_BOOLEAN  USBD_ECM_CfgAdd       (      CPU_INT08U       subclass_nbr,
-                                          CPU_INT08U       dev_nbr,
-                                          CPU_INT08U       cfg_nbr,
-                                    const CPU_CHAR        *mac_addr,
-                                          CPU_INT32U       ethernet_stats,
-                                          CPU_INT16U       max_seg_size,
-                                          CPU_INT16U       num_mc_filters,
-                                          CPU_INT08U       num_pwr_filters,
-                                          USBD_ERR        *p_err);
+CPU_BOOLEAN  USBD_ECM_CfgAdd    (      CPU_INT08U          subclass_nbr,
+                                       CPU_INT08U          dev_nbr,
+                                       CPU_INT08U          cfg_nbr,
+                                 const CPU_CHAR           *mac_addr,
+                                       CPU_INT32U          ethernet_stats,
+                                       CPU_INT16U          max_seg_size,
+                                       CPU_INT16U          num_mc_filters,
+                                       CPU_INT08U          num_pwr_filters,
+                                       USBD_ERR           *p_err);
 
-CPU_INT32U   USBD_ECM_DataRx       (      CPU_INT08U       subclass_nbr,
-                                          CPU_INT08U      *p_buf,
-                                          CPU_INT32U       buf_len,
-                                          CPU_INT16U       timeout,
-                                          USBD_ERR        *p_err);
+CPU_INT32U   USBD_ECM_DataRx    (      CPU_INT08U          subclass_nbr,
+                                       CPU_INT08U         *p_buf,
+                                       CPU_INT32U          buf_len,
+                                       CPU_INT16U          timeout,
+                                       USBD_ERR           *p_err);
 
-CPU_INT32U   USBD_ECM_DataTx       (      CPU_INT08U       subclass_nbr,
-                                          CPU_INT08U      *p_buf,
-                                          CPU_INT32U       buf_len,
-                                          CPU_INT16U       timeout,
-                                          USBD_ERR        *p_err);
+CPU_INT32U   USBD_ECM_DataTx    (      CPU_INT08U          subclass_nbr,
+                                       CPU_INT08U         *p_buf,
+                                       CPU_INT32U          buf_len,
+                                       CPU_INT16U          timeout,
+                                       USBD_ERR           *p_err);
 
-void  USBD_ECM_DataRxAsync         (      CPU_INT08U       subclass_nbr,
-                                          CPU_INT08U      *p_buf,
-                                          CPU_INT32U       buf_len,
-                                          USBD_ASYNC_FNCT  async,
-                                          void            *p_async_arg,
-                                          USBD_ERR        *p_err);
+void  USBD_ECM_DataRxAsync      (      CPU_INT08U          subclass_nbr,
+                                       CPU_INT08U         *p_buf,
+                                       CPU_INT32U          buf_len,
+                                       USBD_ASYNC_FNCT     async,
+                                       void               *p_async_arg,
+                                       USBD_ERR           *p_err);
 
-CPU_INT32U  USBD_ECM_Notify        (      CPU_INT08U       subclass_nbr,
-                                          CPU_INT08U       notification,
-                                          CPU_INT16U       value,
-                                          CPU_INT08U      *p_data,
-                                          CPU_INT32U       len,
-                                          USBD_ERR        *p_err);
+CPU_INT32U  USBD_ECM_Notify     (      CPU_INT08U          subclass_nbr,
+                                       CPU_INT08U          notification,
+                                       CPU_INT16U          value,
+                                       CPU_INT08U         *p_data,
+                                       CPU_INT32U          len,
+                                       USBD_ERR           *p_err);
 
-void  USBD_ECM_NotifyNetConn       (      CPU_INT08U       subclass_nbr,
-                                          CPU_BOOLEAN      conn_status,
-                                          USBD_ERR        *p_err);
+void  USBD_ECM_NotifyNetConn    (      CPU_INT08U          subclass_nbr,
+                                       CPU_BOOLEAN         conn_status,
+                                       USBD_ERR           *p_err);
 
-void  USBD_ECM_NotifyConnSpdChng   (      CPU_INT08U       subclass_nbr,
-                                          CPU_INT32U       dl_bit_rate,
-                                          CPU_INT32U       ul_bit_rate,
-                                          USBD_ERR        *p_err);
+void  USBD_ECM_NotifyConnSpdChng(      CPU_INT08U          subclass_nbr,
+                                       CPU_INT32U          dl_bit_rate,
+                                       CPU_INT32U          ul_bit_rate,
+                                       USBD_ERR           *p_err);
 
 
 /*
